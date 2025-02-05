@@ -39,6 +39,7 @@
     <button onclick="copyShrekCode()">Shrek</button>
     <button onclick="copyKachowCode()">Kachow</button>
     <button onclick="copyMinecraftCode()">Minecraft</button>
+    <button onclick="copyAntsCode()">Ants</button>
 
     <!-- Hidden textarea for DVD-logo code -->
     <textarea id="dvdCode">
@@ -351,6 +352,124 @@ console.log('Lightning McQueen is now chasing your mouse! 🚗💨');
 })();
     </textarea>
 
+    <!-- Hidden textarea for Ants code -->
+    <textarea id="antsCode">
+(function() {
+  // Create a style for the ants
+  const style = document.createElement('style');
+  style.innerHTML = `
+    .ant {
+      width: 10px;
+      height: 10px;
+      position: absolute;
+      background-color: black;
+      border-radius: 50%;
+    }
+  `;
+  document.head.appendChild(style);
+
+  // Function to generate ants
+  function createAnt() {
+    const ant = document.createElement('div');
+    ant.classList.add('ant');
+    document.body.appendChild(ant);
+
+    // Randomly position ants within the view
+    const x = Math.random() * window.innerWidth;
+    const y = Math.random() * window.innerHeight;
+    ant.style.left = `${x}px`;
+    ant.style.top = `${y}px`;
+
+    // Function to check if an element is too close to the edge
+    function isElementNearEdge(element) {
+      const rect = element.getBoundingClientRect();
+      const edgeBuffer = 1; // Minimum distance from the edge of the screen (in pixels)
+
+      // Check if the element is too close to the screen edges
+      return (
+        rect.top < edgeBuffer || rect.left < edgeBuffer ||
+        rect.bottom > window.innerHeight - edgeBuffer ||
+        rect.right > window.innerWidth - edgeBuffer
+      );
+    }
+
+    // Filter the elements that are either images, buttons, or contain text
+    function isValidTarget(element) {
+      // Check for images
+      if (element.tagName.toLowerCase() === 'img') {
+        return true;
+      }
+      // Check for buttons
+      if (element.tagName.toLowerCase() === 'button') {
+        return true;
+      }
+      // Check for text-containing elements (like div, p, span, etc.)
+      if (element.textContent.trim().length > 0) {
+        return true;
+      }
+      return false;
+    }
+
+    // Randomly pick an element from the page that is not near the edge and is a valid target
+    const elements = Array.from(document.querySelectorAll('*')).filter(el =>
+      !isElementNearEdge(el) && isValidTarget(el)
+    );
+    const targetElement = elements[Math.floor(Math.random() * elements.length)];
+
+    if (!targetElement || targetElement === ant) {
+      // If no element found or the ant picked itself, try again
+      return createAnt();
+    }
+
+    // Get the position of the selected element
+    const targetRect = targetElement.getBoundingClientRect();
+    const targetX = targetRect.left + targetRect.width / 2;
+    const targetY = targetRect.top + targetRect.height / 2;
+
+    // Move the ant towards the selected element (simulate pickup)
+    setTimeout(() => {
+      ant.style.transition = 'all 2s ease-in-out';
+      ant.style.left = `${targetX - 5}px`;
+      ant.style.top = `${targetY - 5}px`;
+
+      // After reaching the object, simulate the "pickup" by moving the element with the ant
+      setTimeout(() => {
+        // Attach the element to the ant's position (simulate pickup)
+        targetElement.style.position = 'absolute';
+        targetElement.style.left = `${targetX - 5}px`;
+        targetElement.style.top = `${targetY - 5}px`;
+        document.body.appendChild(targetElement);
+
+        // Then move the ant and the object off-screen
+        setTimeout(() => {
+          ant.style.transition = 'all 3s ease-in-out';
+          ant.style.left = `${Math.random() > 0.5 ? -200 : window.innerWidth + 200}px`;
+          ant.style.top = `${Math.random() > 0.5 ? -200 : window.innerHeight + 200}px`;
+
+          // Move the target object off-screen as well
+          targetElement.style.transition = 'all 3s ease-in-out';
+          targetElement.style.left = `${Math.random() > 0.5 ? -200 : window.innerWidth + 200}px`;
+          targetElement.style.top = `${Math.random() > 0.5 ? -200 : window.innerHeight + 200}px`;
+
+          // Remove the object and the ant from the DOM after they have moved off-screen
+          setTimeout(() => {
+            targetElement.remove(); // Remove the object
+            ant.remove(); // Remove the ant
+          }, 3000);
+        }, 2000);
+      }, 2000);
+    }, 0);
+  }
+
+  // Spawn three ants every second
+  setInterval(() => {
+    createAnt();
+    createAnt();
+    createAnt();
+  }, 1000);  // Every 1000ms (1 second)
+})();
+    </textarea>
+
     <script>
         // Function to copy the DVD-logo code
         async function copyDVDCode() {
@@ -394,6 +513,18 @@ console.log('Lightning McQueen is now chasing your mouse! 🚗💨');
             try {
                 await navigator.clipboard.writeText(minecraftCodeTextarea.value);
                 alert('Minecraft code copied to clipboard!');
+            } catch (err) {
+                console.error('Failed to copy code: ', err);
+                alert('Failed to copy code. Please manually copy the code from the textarea.');
+            }
+        }
+
+        // Function to copy the Ants code
+        async function copyAntsCode() {
+            const antsCodeTextarea = document.getElementById('antsCode');
+            try {
+                await navigator.clipboard.writeText(antsCodeTextarea.value);
+                alert('Ants code copied to clipboard!');
             } catch (err) {
                 console.error('Failed to copy code: ', err);
                 alert('Failed to copy code. Please manually copy the code from the textarea.');
