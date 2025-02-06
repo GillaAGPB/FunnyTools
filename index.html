@@ -40,6 +40,8 @@
     <button onclick="copyKachowCode()">Kachow</button>
     <button onclick="copyMinecraftCode()">Minecraft</button>
     <button onclick="copyAntsCode()">Ants</button>
+    <button onclick="copyFishCode()">Fish</button>
+    <button onclick="copySpaceCode()">Space</button>
 
     <!-- Hidden textarea for DVD-logo code -->
     <textarea id="dvdCode">
@@ -470,6 +472,372 @@ console.log('Lightning McQueen is now chasing your mouse! 🚗💨');
 })();
     </textarea>
 
+    <!-- Hidden textarea for Fish code -->
+    <textarea id="fishCode">
+(() => {
+    const fishCount = 10;
+    const lilyPadCount = 5;
+    const fishSpeed = 1.5
+    const scareDistance = 100;
+    const fishSize = 80;
+    const lilyPadSize = 60;
+    const fishImage = 'https://lagunakoi.com/wp-content/uploads/2024/12/Photoroom_20241210_110354.png';
+    const lilyPadImage = 'https://static.vecteezy.com/system/resources/previews/046/622/130/non_2x/water-lily-flower-and-leaf-png.png';
+    const foodSize = 5;
+    const foodFloatSpeed = 0.3;
+    const foodAttractRadius = 150;
+    const lilyPadFloatSpeed = 0.1;
+
+    let fishArray = [];
+    let lilyPadArray = [];
+    let foodArray = [];
+
+    document.addEventListener("click", (e) => {
+        spawnFood(e.clientX, e.clientY);
+    });
+
+    function createOverlay() {
+        const overlay = document.createElement("div");
+        overlay.style.position = "fixed";
+        overlay.style.top = "0";
+        overlay.style.left = "0";
+        overlay.style.width = "100vw";
+        overlay.style.height = "100vh";
+        overlay.style.backgroundColor = "rgba(0, 100, 255, 0.15)"; // Transparent blue water effect
+        overlay.style.pointerEvents = "none";
+        overlay.style.zIndex = "2"; // Above background, below lily pads and fish
+        document.body.appendChild(overlay);
+    }
+
+    function createLilyPad() {
+        const lilyPad = document.createElement("img");
+        lilyPad.src = lilyPadImage;
+        lilyPad.style.position = "absolute";
+        lilyPad.style.width = `${lilyPadSize}px`;
+        lilyPad.style.transformOrigin = "center";
+        lilyPad.style.left = `${Math.random() * (window.innerWidth - lilyPadSize)}px`;
+        lilyPad.style.top = `${Math.random() * (window.innerHeight - lilyPadSize)}px`;
+        lilyPad.style.zIndex = "3"; // Above water, below fish
+        document.body.appendChild(lilyPad);
+
+        return {
+            element: lilyPad,
+            x: parseFloat(lilyPad.style.left),
+            y: parseFloat(lilyPad.style.top),
+            angle: Math.random() * 360,
+        };
+    }
+
+    function updateLilyPad(lilyPad) {
+        lilyPad.x += Math.cos(lilyPad.angle * (Math.PI / 180)) * lilyPadFloatSpeed;
+        lilyPad.y += Math.sin(lilyPad.angle * (Math.PI / 180)) * lilyPadFloatSpeed;
+        lilyPad.element.style.left = `${lilyPad.x}px`;
+        lilyPad.element.style.top = `${lilyPad.y}px`;
+    }
+
+    function createFood(x, y) {
+        const food = document.createElement("div");
+        food.style.position = "absolute";
+        food.style.width = `${foodSize}px`;
+        food.style.height = `${foodSize}px`;
+        food.style.backgroundColor = "yellow";
+        food.style.borderRadius = "50%";
+        food.style.left = `${x}px`;
+        food.style.top = `${y}px`;
+        food.style.zIndex = "4"; // Above blur but below fish
+        document.body.appendChild(food);
+
+        return {
+            element: food,
+            x: x,
+            y: y,
+            angle: Math.random() * 360,
+        };
+    }
+
+    function spawnFood(x, y) {
+        const numFoodParticles = 5;
+        for (let i = 0; i < numFoodParticles; i++) {
+            foodArray.push(createFood(x, y));
+        }
+    }
+
+    function updateFood(food) {
+        food.x += Math.cos(food.angle * (Math.PI / 180)) * foodFloatSpeed;
+        food.y += Math.sin(food.angle * (Math.PI / 180)) * foodFloatSpeed;
+        food.angle += (Math.random() - 0.5) * 10;
+        
+        food.x = Math.max(0, Math.min(window.innerWidth - foodSize, food.x));
+        food.y = Math.max(0, Math.min(window.innerHeight - foodSize, food.y));
+
+        food.element.style.left = `${food.x}px`;
+        food.element.style.top = `${food.y}px`;
+    }
+
+    function createFish(container) {
+        const fish = document.createElement("img");
+        fish.src = fishImage;
+        fish.style.position = "absolute";
+        fish.style.width = `${fishSize}px`;
+        fish.style.transformOrigin = "center";
+        fish.style.transition = "transform 0.2s linear";
+        fish.style.left = `${Math.random() * (window.innerWidth - fishSize)}px`;
+        fish.style.top = `${Math.random() * (window.innerHeight - fishSize)}px`;
+        fish.style.zIndex = "5"; // Above water and lily pads
+        container.appendChild(fish);
+
+        return {
+            element: fish,
+            x: parseFloat(fish.style.left),
+            y: parseFloat(fish.style.top),
+            angle: Math.random() * 360,
+            speed: fishSpeed,
+        };
+    }
+
+    function updateFish(fish) {
+        let closestFood = null;
+        let minDist = Infinity;
+
+        foodArray.forEach(food => {
+            const dx = food.x - fish.x;
+            const dy = food.y - fish.y;
+            const dist = Math.hypot(dx, dy);
+            if (dist < minDist && dist < foodAttractRadius) {
+                minDist = dist;
+                closestFood = food;
+            }
+        });
+
+        if (closestFood) {
+            const dx = closestFood.x - fish.x;
+            const dy = closestFood.y - fish.y;
+            fish.angle = Math.atan2(dy, dx) * (180 / Math.PI);
+            fish.speed = fishSpeed * 2;
+
+            if (minDist < foodSize) {
+                closestFood.element.remove();
+                foodArray = foodArray.filter(item => item !== closestFood);
+            }
+        } else {
+            fish.angle += (Math.random() - 0.5) * 20;
+            fish.speed = fishSpeed;
+        }
+
+        fish.x += Math.cos(fish.angle * (Math.PI / 180)) * fish.speed;
+        fish.y += Math.sin(fish.angle * (Math.PI / 180)) * fish.speed;
+
+        fish.x = Math.max(0, Math.min(window.innerWidth - fishSize, fish.x));
+        fish.y = Math.max(0, Math.min(window.innerHeight - fishSize, fish.y));
+
+        fish.element.style.left = `${fish.x}px`;
+        fish.element.style.top = `${fish.y}px`;
+        fish.element.style.transform = `rotate(${fish.angle - 45}deg)`;
+    }
+
+    function animate() {
+        fishArray.forEach(updateFish);
+        lilyPadArray.forEach(updateLilyPad);
+        foodArray.forEach(updateFood);
+        requestAnimationFrame(animate);
+    }
+
+    function createContainer(zIndex) {
+        const container = document.createElement("div");
+        container.style.position = "fixed";
+        container.style.top = "0";
+        container.style.left = "0";
+        container.style.width = "100vw";
+        container.style.height = "100vh";
+        container.style.zIndex = zIndex;
+        document.body.appendChild(container);
+        return container;
+    }
+
+    createOverlay();
+    const fishContainer = createContainer(5);
+    fishArray = Array.from({ length: fishCount }, () => createFish(fishContainer));
+    lilyPadArray = Array.from({ length: lilyPadCount }, createLilyPad);
+    animate();
+})();
+    </textarea>
+
+    <!-- Hidden textarea for Space code -->
+    <textarea id="spaceCode">
+// Create letters (instead of particles)
+let letters = [];
+let gravityStrength = 5000; // Gravity strength
+let minForce = 0.5; // Minimum force to apply, even for distant letters
+let maxSpeed = 10; // Max speed for slower movement
+let screenWidth = window.innerWidth;
+let screenHeight = window.innerHeight;
+
+let cursorX = screenWidth / 2; // Initial cursor position
+let cursorY = screenHeight / 2; // Initial cursor position
+let maxLetters = 250; // Maximum number of letters
+
+// Get all the text nodes and extract letters
+function getTextLetters() {
+  let textNodes = [];
+  let walk = document.createTreeWalker(
+    document.body,
+    NodeFilter.SHOW_TEXT,
+    null,
+    false
+  );
+
+  while (walk.nextNode()) {
+    textNodes.push(walk.currentNode);
+  }
+
+  let letterArray = [];
+  textNodes.forEach(node => {
+    // Split text content of each node into individual letters (characters) and exclude spaces
+    letterArray.push(...node.textContent.replace(/\s+/g, '').split(''));
+  });
+
+  return { textNodes, letterArray };
+}
+
+// Get all font families, colors, and font sizes used on the website
+function getStyles() {
+  const allElements = document.querySelectorAll('*');
+  const fonts = new Set(); // To store unique fonts
+  const colors = new Set(); // To store unique colors
+  const fontSizes = new Set(); // To store unique font sizes
+
+  allElements.forEach(element => {
+    const fontFamily = window.getComputedStyle(element).fontFamily;
+    const color = window.getComputedStyle(element).color;
+    const fontSize = window.getComputedStyle(element).fontSize;
+
+    fonts.add(fontFamily); // Add the font family to the set
+    colors.add(color); // Add the color to the set
+    fontSizes.add(fontSize); // Add the font size to the set
+  });
+
+  return {
+    fonts: Array.from(fonts),
+    colors: Array.from(colors),
+    fontSizes: Array.from(fontSizes),
+  };
+}
+
+// Replace each letter with a floating version and remove the original text
+function createLetters() {
+  let { textNodes, letterArray } = getTextLetters();
+  let count = Math.min(letterArray.length, maxLetters); // Limit the number of letters to maxLetters
+  const { fonts, colors, fontSizes } = getStyles(); // Get styles used on the page
+
+  // Loop through each letter and replace it
+  for (let i = 0; i < count; i++) {
+    let letter = letterArray[i];
+    let span = document.createElement('span');
+    span.textContent = letter;
+    span.style.position = 'absolute';
+    span.style.transition = 'none'; // Disable transition for smooth movement
+    span.style.zIndex = '9999';
+
+    // Assign a random font, color, and font size from the styles
+    span.style.fontFamily = fonts[Math.floor(Math.random() * fonts.length)];
+    span.style.color = colors[Math.floor(Math.random() * colors.length)];
+    span.style.fontSize = fontSizes[Math.floor(Math.random() * fontSizes.length)];
+
+    // Get random off-screen starting position
+    let x = Math.random() * screenWidth * 2 - screenWidth; // Random x position outside the screen
+    let y = Math.random() * screenHeight * 2 - screenHeight; // Random y position outside the screen
+
+    // Set initial position for the letter to appear from off-screen
+    span.style.left = `${x}px`;
+    span.style.top = `${y}px`;
+
+    // Append the letter to the page
+    document.body.appendChild(span);
+
+    // Remove the original text node after replacing it with a span
+    textNodes[i].parentNode.removeChild(textNodes[i]);
+
+    // Store the letter's data for gravitational physics
+    letters.push({
+      element: span,
+      x: x,  // Initial X position
+      y: y,  // Initial Y position
+      vx: 0, // No initial velocity
+      vy: 0, // No initial velocity
+      ax: 0, // Initial acceleration
+      ay: 0, // Initial acceleration
+    });
+  }
+}
+
+// Track mouse position
+document.addEventListener('mousemove', (e) => {
+  cursorX = e.clientX;
+  cursorY = e.clientY;
+});
+
+// Update letters based on gravity force from the cursor
+function updateLetters() {
+  letters.forEach(letter => {
+    // Calculate distance between letter and cursor
+    let dx = cursorX - letter.x;
+    let dy = cursorY - letter.y;
+    let distance = Math.sqrt(dx * dx + dy * dy);
+
+    // Avoid extremely small distance values to prevent very large forces
+    if (distance < 100) {
+      distance = 100; // Prevent divide by zero or extreme values
+    }
+
+    // Gravitational force: stronger as letters get closer to the cursor
+    let force = gravityStrength / (distance * distance); // Inverse square law
+
+    // Apply minimum force threshold
+    force = Math.max(force, minForce); // Make sure force never goes below the minimum
+
+    // Calculate acceleration based on the gravitational force
+    let ax = (dx / distance) * force;
+    let ay = (dy / distance) * force;
+
+    // Apply acceleration to velocity (simulating falling)
+    letter.ax = ax;
+    letter.ay = ay;
+
+    // Apply acceleration to velocity
+    letter.vx += letter.ax;
+    letter.vy += letter.ay;
+
+    // Limit the maximum velocity to prevent runaway speeds
+    let speed = Math.sqrt(letter.vx * letter.vx + letter.vy * letter.vy);
+    if (speed > maxSpeed) {
+      let scale = maxSpeed / speed;
+      letter.vx *= scale;
+      letter.vy *= scale;
+    }
+
+    // Update letter positions based on velocity
+    letter.x += letter.vx;
+    letter.y += letter.vy;
+
+    // Apply new position to the letter
+    letter.element.style.left = letter.x - 10 + 'px'; // Center the letter
+    letter.element.style.top = letter.y - 10 + 'px'; // Center the letter
+  });
+}
+
+// Game loop to update letters every frame
+function gameLoop() {
+  screenWidth = window.innerWidth; // Update screen width on resize
+  screenHeight = window.innerHeight; // Update screen height on resize
+  updateLetters();
+  requestAnimationFrame(gameLoop);
+}
+
+// Initialize the letter animations
+createLetters();
+gameLoop();
+    </textarea>
+
     <script>
         // Function to copy the DVD-logo code
         async function copyDVDCode() {
@@ -530,6 +898,30 @@ console.log('Lightning McQueen is now chasing your mouse! 🚗💨');
                 alert('Failed to copy code. Please manually copy the code from the textarea.');
             }
         }
+
+        // Function to copy the Fish code
+        async function copyFishCode() {
+            const fishCodeTextarea = document.getElementById('fishCode');
+            try {
+                await navigator.clipboard.writeText(fishCodeTextarea.value);
+                alert('Fish code copied to clipboard!');
+            } catch (err) {
+                console.error('Failed to copy code: ', err);
+                alert('Failed to copy code. Please manually copy the code from the textarea.');
+            }
+        }
+
+        // Function to copy the Space code
+        async function copySpaceCode() {
+            const spaceCodeTextarea = document.getElementById('spaceCode');
+            try {
+                await navigator.clipboard.writeText(spaceCodeTextarea.value);
+                alert('Space code copied to clipboard!');
+            } catch (err) {
+                console.error('Failed to copy code: ', err);
+                alert('Failed to copy code. Please manually copy the code from the textarea.');
+            }
+        }
     </script>
 </body>
-</html>
+</html>f54
